@@ -3,209 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>קלפי שאלות - מיתולוגיה יוונית</title>
-    <!-- שימוש ב-Tailwind CSS לעיצוב מהיר ורספונסיבי -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>משחק קלפים 9:16</title>
     <style>
-        /* ייבוא פונטים: רוביק לטקסט כללי, ופונט סריפי קלאסי לשאלות המיתולוגיה */
-        @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Rubik:wght@400;700&display=swap');
-        
         body {
-            font-family: 'Rubik', sans-serif;
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            /* איפוס ועיצוב הרקע */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* סביבת תלת-ממד עבור הקלף */
-        .card-scene {
-            perspective: 1000px;
-        }
-
-        /* עטיפת הקלף - מבצעת את ההיפוך עם אפקט קופצני (bouncy) ונעים לעין */
-        .card-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform-style: preserve-3d;
-        }
-
-        /* מצב הפוך */
-        .card-wrapper.is-flipped {
-            transform: rotateY(180deg);
-        }
-
-        /* צדדי הקלף */
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 1rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-        }
-
-        /* החלק האחורי של הקלף (קלף הפתיחה) */
-        .card-back {
-            background-color: #1e293b;
-        }
-
-        /* החלק הקדמי של הקלף */
-        .card-front {
-            background-color: #f8fafc;
-            transform: rotateY(180deg);
-        }
-
-        /* עיצוב לתמונות הקלפים */
-        .card-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            pointer-events: none;
-        }
-
-        /* מניעת סימון טקסט בטעות */
-        .no-select {
+        .card-container {
+            /* הגדרת גודל הקלף ויחס התצוגה של 9:16 */
+            height: 65vh; /* תופס 65% מגובה המסך */
+            aspect-ratio: 9 / 16; /* שומר על הפרופורציות שביקשת */
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 10vh; /* גודל טקסט יחסי לגודל הקלף */
+            font-weight: bold;
+            transition: transform 0.2s ease-in-out;
             user-select: none;
+        }
+
+        /* צבעי הקלפים */
+        .red-card {
+            color: #e74c3c;
+        }
+        
+        .black-card {
+            color: #2c3e50;
+        }
+
+        .suit {
+            font-size: 12vh;
+            margin-top: -20px;
+        }
+
+        /* עיצוב הכפתור */
+        button {
+            margin-top: 40px;
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background-color: #3498db;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden text-slate-800">
+<body>
 
-    <!-- אזור ההתראות -->
-    <div id="toast" class="absolute top-8 bg-amber-500 text-slate-900 px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 font-bold z-50">
-        מתחיל מחדש...
+    <div id="card" class="card-container black-card">
+        <div id="card-value">?</div>
     </div>
 
-    <!-- מונה קלפים -->
-    <div class="absolute top-4 right-4 text-white/50 text-sm no-select">
-        קלפים נותרים: <span id="cards-left">0</span>
-    </div>
-
-    <!-- מיכל הקלף - שומר על יחס של 9:16 -->
-    <div class="card-scene w-[65vw] max-w-[320px] aspect-[9/16] cursor-pointer group" onclick="drawCard()">
-        <div id="card" class="card-wrapper group-hover:shadow-[0_0_30px_rgba(251,191,36,0.3)] rounded-2xl transition-shadow duration-300">
-            <!-- אחורי הקלף (קלף הפתיחה) -->
-            <div class="card-face card-back">
-                <img src="images/intro.jpg" alt="קלף פתיחה" class="card-image" onerror="this.src='https://placehold.co/720x1280/1e293b/fbbf24?text=Intro+Card'">
-            </div>
-            
-            <!-- קדמת הקלף (תמונת המשחק) -->
-            <div class="card-face card-front no-select" id="card-front-content">
-                <img src="" alt="קלף משחק" class="card-image" id="front-image">
-            </div>
-        </div>
-    </div>
-
-    <!-- כפתור שליפת קלף -->
-    <button onclick="drawCard()" class="mt-12 px-10 py-4 bg-amber-500 hover:bg-amber-400 text-slate-900 text-xl font-bold rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all transform hover:scale-105 active:scale-95 no-select">
-        שלוף קלף
-    </button>
+    <button id="draw-btn">שלוף קלף</button>
 
     <script>
-        // מאגר נתיבי התמונות של 12 קלפי המשחק
-        const cardImages = [
-            "images/card1.jpg",
-            "images/card2.jpg",
-            "images/card3.jpg",
-            "images/card4.jpg",
-            "images/card5.jpg",
-            "images/card6.jpg",
-            "images/card7.jpg",
-            "images/card8.jpg",
-            "images/card9.jpg",
-            "images/card10.jpg",
-            "images/card11.jpg",
-            "images/card12.jpg"
-        ];
-        
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         let deck = [];
-        let isCardRevealed = false;
 
-        // בניית חפיסת הקלפים (מתמונות)
-        function createDeck() {
-            deck = [...cardImages];
-            updateCounter();
+        // פונקציה ליצירת חפיסת קלפים חדשה
+        function buildDeck() {
+            deck = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    deck.push({ suit: suit, value: value });
+                }
+            }
         }
 
-        // עדכון תצוגת הכמות
-        function updateCounter() {
-            document.getElementById('cards-left').textContent = deck.length;
-        }
-
-        // הצגת התראות
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 2500);
-        }
-
-        // עדכון התמונה בקדמת הקלף
-        function renderCardFront(imagePath) {
-            const frontImage = document.getElementById('front-image');
-            frontImage.src = imagePath;
-            
-            // פלייסבולדר למקרה שגיאה בטעינת התמונה (לצורך בדיקות)
-            frontImage.onerror = function() {
-                this.src = 'https://placehold.co/720x1280/e2e8f0/475569?text=Image+Not+Found';
-            };
-        }
-
-        // ניהול שליפת הקלף והאנימציות
+        // פונקציה לשליפת קלף
         function drawCard() {
-            const cardElement = document.getElementById('card');
-            
-            // אם נשלף הקלף וצריך לאפס
+            // אם החפיסה ריקה, מייצרים אותה מחדש
             if (deck.length === 0) {
-                showToast('מתחיל מחדש...');
-                createDeck();
-                
-                // הופך חזרה צד
-                cardElement.style.transform = "";
-                cardElement.classList.remove('is-flipped');
-                isCardRevealed = false;
-                return;
+                alert("החפיסה נגמרה! מערבב חפיסה חדשה...");
+                buildDeck();
             }
 
-            if (isCardRevealed) {
-                // אפקט שקיעה עדין (Scale Down) לפני החלפת הקלף - יוצר תחושה שהקלף זז פנימה לחפיסה
-                cardElement.style.transform = "rotateY(0deg) scale(0.95)";
-                cardElement.classList.remove('is-flipped');
-                
-                // ממתין שהקלף יסתובב לפני שמציג שאלה חדשה
-                setTimeout(() => {
-                    pullRandomCardAndShow();
-                }, 400); 
-            } else {
-                pullRandomCardAndShow();
-            }
-        }
+            // בוחרים קלף אקראי מתוך החפיסה שנותרה
+            const randomIndex = Math.floor(Math.random() * deck.length);
+            const card = deck.splice(randomIndex, 1)[0]; // שולף ומסיר את הקלף מהמערך
 
-        // שליפת השאלה עצמה מהמערך
-        function pullRandomCardAndShow() {
+            // מעדכנים את התצוגה על המסך
             const cardElement = document.getElementById('card');
             
-            const randomIndex = Math.floor(Math.random() * deck.length);
-            const selectedCardImage = deck.splice(randomIndex, 1)[0];
-            
-            updateCounter();
-            renderCardFront(selectedCardImage);
-            
-            // מוחק את ה-scale ששמנו מקודם (כדי שיחזור לגודל מלא) ומפעיל היפוך
-            cardElement.style.transform = "";
-            cardElement.classList.add('is-flipped');
-            isCardRevealed = true;
+            cardElement.innerHTML = `
+                <div id="card-value">${card.value}</div>
+                <div class="suit">${card.suit}</div>
+            `;
+
+            // קביעת הצבע (אדום ללב ויהלום, שחור לעלה ותלתן)
+            if (card.suit === '♥' || card.suit === '♦') {
+                cardElement.className = 'card-container red-card';
+            } else {
+                cardElement.className = 'card-container black-card';
+            }
+
+            // אפקט קטן של קפיצה כששולפים קלף
+            cardElement.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                cardElement.style.transform = 'scale(1)';
+            }, 150);
         }
 
-        // כשמעלים את העמוד, מכינים את החפיסה
-        window.onload = () => {
-            createDeck();
-        };
+        // מאזין ללחיצה על הכפתור
+        document.getElementById('draw-btn').addEventListener('click', drawCard);
 
+        // יצירת החפיסה עם טעינת הדף
+        buildDeck();
     </script>
+
 </body>
 </html>
